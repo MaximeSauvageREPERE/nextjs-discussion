@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
 import { error } from "console";
+import { ObjectId } from "mongodb";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,17 +11,41 @@ export async function GET() {
     return NextResponse.json(messages);
 }
 
+export async function DELETE(request: NextRequest) {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+    if(!session) {
+        return NextResponse.json({error : "Non autorisé"}, {status : 401});
+    }
+    
+    const {_id, userId} = await request.json();
+
+    if (!_id || !userId) {
+        return NextResponse.json({error: "JSON non valide"}, {status: 400});
+    }
+
+    if (userId != session.user.id) {
+        return NextResponse.json({error: "Non autorisé"}, {status: 401});
+    }
+
+    const db = await getDb();
+    await db.collection("messages").deleteOne({"_id": new ObjectId(_id)})
+}
+
 export async function POST(request: NextRequest) {
     const session = await auth.api.getSession({
         headers: await headers(),
     });
-    if(!session)
+    if(!session) {
         return NextResponse.json({error : "Non autorisé"}, {status : 401});
+    }
     
     const {content} = await request.json();
     
-    if(!content)
+    if(!content) {
         return NextResponse.json({error : "Message vide"}, {status : 400});
+    }
 
     const db = await getDb(); 
     const message = {

@@ -2,18 +2,12 @@
 
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
-
-interface Messages{
-    _id : string;
-    content : string;
-    userId : string; 
-    userName : string;
-    createdAt : string;
-}
+import CardMessage from "./CardMessage";
+import Message from "@/types/Message";
 
 export default function ChatMessages () {
 
-    const [messages, setMessages] = useState<Messages[]>([]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const {data : session} = authClient.useSession();
 
     useEffect(() => {
@@ -34,16 +28,9 @@ export default function ChatMessages () {
     }
     return (
     <div className="p-4 flex gap-4 flex-col">
-        {messages.map((m) => {
-            const isOwn = m.userId === session?.user.id;
-            return (
-            <div key={m._id} className={`flex flex-col rounded ${isOwn ? "items-end" : "items-start"}`}>
-                {!isOwn && <p>{m.userName}</p>}
-                <p>{m.content}</p>
-                <p>{new Date(m.createdAt).toLocaleTimeString("fr-FR")}</p>
-            </div>
-            );
-        })}
+        {messages.map((m) => (
+            <CardMessage m={m} userId={session?.user.id} key={m._id}></CardMessage>
+        ))}
     </div>
     );
 }
